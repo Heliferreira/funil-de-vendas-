@@ -1,0 +1,18 @@
+# Dependências (não precisa no repositório)
+node_modules/
+
+# Pastas de build/compiladas
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# Variáveis de ambiente
+.env
+.env.local
+
+# Sistema (arquivos inúteis)
+.DS_Store
+Thumbs.db
