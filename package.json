@@ -1,0 +1,24 @@
+{
+  "name": "funnel-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node dist/index.js",
+    "build": "rimraf dist && esbuild src/index.js --bundle --platform=node --format=esm --outfile=dist/index.js",
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.16.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "nodemon": "^3.1.0",
+    "prisma": "^5.16.1",
+    "rimraf": "^5.0.7"
+  }
+}
