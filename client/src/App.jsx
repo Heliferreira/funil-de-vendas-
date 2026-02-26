@@ -60,7 +60,7 @@ export default function App() {
   async function fetchDeals() {
     setLoading(true)
     try {
-      const res = await axios.get(`${API}/api/deals`, {
+      const res = await axios.get(`${API}/deals`, {
         params: { q: query || undefined, priority: priority || undefined, _ts: Date.now() }, // cache-buster
         headers: { 'Cache-Control': 'no-cache' }
       })
@@ -113,10 +113,10 @@ export default function App() {
       dueDate: new Date(editing.dueDate)
     }
     if (editing.id) {
-      await axios.put(`${API}/api/deals/${editing.id}`, payload)
-    } else {
-      await axios.post(`${API}/api/deals`, payload)
-    }
+  await axios.put(`${API}/deals/${editing.id}`, payload)
+} else {
+  await axios.post(`${API}/deals`, payload)
+}
     setModalOpen(false)
     setEditing(null)
     fetchDeals()
@@ -124,7 +124,7 @@ export default function App() {
 
   async function deleteItem(id) {
     if (!confirm('Excluir este negócio?')) return
-    await axios.delete(`${API}/api/deals/${id}`)
+    await axios.delete(`${API}/deals/${id}`)
     fetchDeals()
   }
 
@@ -146,7 +146,7 @@ export default function App() {
     }
     finalIds.splice(destination.index, 0, draggableId)
 
-    await axios.post(`${API}/api/deals/reorder`, {
+    await axios.post(`${API}/deals/reorder`, {
       sourceStage,
       destinationStage: destStage,
       orderedIds: finalIds
