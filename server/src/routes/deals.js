@@ -52,19 +52,34 @@ router.post('/', async (req, res) => {
 router.post('/reorder', async (req, res) => {
   try {
     const { id, newStage, newIndex } = req.body;
-    console.log(`🔄 Movendo Card ${id} para ${newStage} na posição ${newIndex}`);
+    
+    console.log(`🔄 Tentando mover Card ID: ${id} para ${newStage} (Índice: ${newIndex})`);
+
+    // Garantimos que o ID é um número inteiro
+    const cleanId = parseInt(id);
+    const cleanIndex = parseInt(newIndex) || 0;
+
+    if (isNaN(cleanId)) {
+      console.error("❌ ID inválido recebido:", id);
+      return res.status(400).json({ error: "ID do card inválido" });
+    }
 
     const updated = await prisma.deal.update({
-      where: { id: Number(id) },
+      where: { id: cleanId },
       data: {
-        stage: newStage,
-        orderIndex: newIndex
+        stage: String(newStage), // Garante que é string
+        orderIndex: cleanIndex   // Garante que é número
       }
     });
+
+    console.log("✅ Banco atualizado com sucesso!");
     res.json(updated);
   } catch (err) {
-    console.error("❌ ERRO AO REORDENAR:", err);
-    res.status(500).json({ error: "Erro ao reordenar", details: String(err) });
+    console.error("❌ ERRO CRÍTICO NO BANCO:", err.message);
+    res.status(500).json({ 
+      error: "Erro ao reordenar no banco", 
+      details: err.message 
+    });
   }
 });
 
