@@ -51,35 +51,33 @@ router.post('/', async (req, res) => {
 // 3. REORDENAR (DRAG & DROP) - Esta era a peça que faltava!
 router.post('/reorder', async (req, res) => {
   try {
-    const { id, newStage, newIndex } = req.body;
-    
-    console.log(`🔄 Tentando mover Card ID: ${id} para ${newStage} (Índice: ${newIndex})`);
+    const { destinationStage, orderedIds } = req.body;
 
-    // Garantimos que o ID é um número inteiro
-    const cleanId = parseInt(id);
-    const cleanIndex = parseInt(newIndex) || 0;
+    console.log(`📦 Reordenando coluna: ${destinationStage}`);
+    console.log(`🔢 Nova ordem de IDs:`, orderedIds);
 
-    if (isNaN(cleanId)) {
-      console.error("❌ ID inválido recebido:", id);
-      return res.status(400).json({ error: "ID do card inválido" });
+    if (!orderedIds || !Array.isArray(orderedIds)) {
+      return res.status(400).json({ error: "Lista de IDs inválida" });
     }
 
-    const updated = await prisma.deal.update({
-      where: { id: cleanId },
-      data: {
-        stage: String(newStage), // Garante que é string
-        orderIndex: cleanIndex   // Garante que é número
-      }
+    // O Prisma atualiza cada card da lista com sua nova posição (index)
+    const updates = orderedIds.map((id, index) => {
+      return prisma.deal.update({
+        where: { id: Number(id) },
+        data: { 
+          stage: destinationStage, 
+          orderIndex: index 
+        }
+      });
     });
 
-    console.log("✅ Banco atualizado com sucesso!");
-    res.json(updated);
+    await Promise.all(updates);
+
+    console.log("✅ Coluna reordenada com sucesso!");
+    res.json({ message: "Ordem atualizada" });
   } catch (err) {
-    console.error("❌ ERRO CRÍTICO NO BANCO:", err.message);
-    res.status(500).json({ 
-      error: "Erro ao reordenar no banco", 
-      details: err.message 
-    });
+    console.error("❌ ERRO AO REORDENAR:", err.message);
+    res.status(500).json({ error: "Falha no banco de dados", details: err.message });
   }
 });
 
