@@ -49,7 +49,7 @@ app.get('/health', async (req, res) => {
 });
 
 // ROTAS DA API - Adicionei um middleware de log específico para as rotas de deals
-app.use('/api/deals', (req, res, next) => {
+app.use('/deals', (req, res, next) => {
   console.log(`📡 Requisição recebida: ${req.method} ${req.url}`);
   next();
 }, dealsRouter);
