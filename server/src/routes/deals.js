@@ -49,6 +49,7 @@ router.post('/', async (req, res) => {
 });
 
 // 3. REORDENAR (DRAG & DROP) - Esta era a peça que faltava!
+// 3. REORDENAR (DRAG & DROP) - Esta era a peça que faltava!
 router.post('/reorder', async (req, res) => {
   try {
     const { destinationStage, orderedIds } = req.body;
@@ -60,10 +61,10 @@ router.post('/reorder', async (req, res) => {
       return res.status(400).json({ error: "Lista de IDs inválida" });
     }
 
-    // O Prisma atualiza cada card da lista com sua nova posição (index)
+    // Criamos as operações de atualização garantindo que o ID seja um número
     const updates = orderedIds.map((id, index) => {
       return prisma.deal.update({
-        where: { id: Number(id) },
+        where: { id: Number(id) }, // Converte String para Número
         data: { 
           stage: destinationStage, 
           orderIndex: index 
@@ -71,6 +72,7 @@ router.post('/reorder', async (req, res) => {
       });
     });
 
+    // Executa todas as atualizações no banco de uma vez
     await Promise.all(updates);
 
     console.log("✅ Coluna reordenada com sucesso!");
