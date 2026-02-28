@@ -23,8 +23,13 @@ async function testConnection() {
 }
 testConnection();
 
-// middlewares básicos
-app.use(cors());
+// === AJUSTE NO CORS PARA LIBERAR O FRONT-END ===
+app.use(cors({
+  origin: '*', // Permite todas as origens ou coloque a URL do seu front 'https://funil-de-vendas-rva8.onrender.com'
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -48,7 +53,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// ROTAS DA API - Adicionei um middleware de log específico para as rotas de deals
+// ROTAS DA API
 app.use('/deals', (req, res, next) => {
   console.log(`📡 Requisição recebida: ${req.method} ${req.url}`);
   next();

@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 2. CRIAR NOVO NEGÓCIO
+// 2. CRIAR NOVO NEGÓCIO (UNITÁRIO)
 router.post('/', async (req, res) => {
   try {
     const data = req.body;
@@ -48,6 +48,42 @@ router.post('/', async (req, res) => {
   }
 });
 
+// === NOVA ROTA: IMPORTAÇÃO EM MASSA (BULK) ===
+router.post('/bulk', async (req, res) => {
+  try {
+    const { deals } = req.body;
+
+    if (!deals || !Array.isArray(deals)) {
+      return res.status(400).json({ error: "Dados inválidos para importação" });
+    }
+
+    // Buscamos o último index da coluna LEAD para continuar a contagem
+    const maxIndex = await prisma.deal.aggregate({
+      where: { stage: 'LEAD' },
+      _max: { orderIndex: true }
+    });
+    
+    let currentOrder = (maxIndex._max.orderIndex ?? -1) + 1;
+
+    // Adicionamos o orderIndex incremental para cada item importado
+    const dealsWithOrder = deals.map((deal) => ({
+      ...deal,
+      orderIndex: currentOrder++
+    }));
+
+    const result = await prisma.deal.createMany({
+      data: dealsWithOrder,
+      skipDuplicates: true
+    });
+
+    console.log(`✅ ${result.count} leads importados com sucesso!`);
+    res.status(201).json(result);
+  } catch (err) {
+    console.error("❌ ERRO NA IMPORTAÇÃO EM MASSA:", err.message);
+    res.status(500).json({ error: "Falha ao importar dados", details: err.message });
+  }
+});
+
 // 3. REORDENAR (DRAG & DROP)
 router.post('/reorder', async (req, res) => {
   try {
@@ -59,7 +95,6 @@ router.post('/reorder', async (req, res) => {
       return res.status(400).json({ error: "Lista de IDs inválida" });
     }
 
-    // Atualiza cada card usando ID como STRING
     const updates = orderedIds.map((id, index) => {
       return prisma.deal.update({
         where: { id: String(id) },
@@ -80,14 +115,14 @@ router.post('/reorder', async (req, res) => {
   }
 });
 
-// 4. ATUALIZAR DADOS DO CARD (MODAL DE EDIÇÃO)
+// 4. ATUALIZAR DADOS DO CARD
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
     
     const updated = await prisma.deal.update({
-      where: { id: String(id) }, // Corrigido para String
+      where: { id: String(id) },
       data
     });
     res.json(updated);
@@ -102,7 +137,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.deal.delete({
-      where: { id: String(id) } // Corrigido para String
+      where: { id: String(id) }
     });
     res.status(204).send();
   } catch (err) {
