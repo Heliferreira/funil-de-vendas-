@@ -24,10 +24,8 @@ async function testConnection() {
 testConnection();
 
 // === AJUSTE NO CORS PARA LIBERAR O FRONT-END ===
-// Substitua o app.use(cors()) antigo por este:
 app.use(cors({
-  origin: true, // Permite qualquer origem que solicite
-  credentials: true,
+  origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
