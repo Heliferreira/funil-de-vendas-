@@ -157,8 +157,8 @@ export default function App() {
   return (
     <div className="p-4 max-w-7xl mx-auto">
     <header className="mb-4 flex flex-col items-center text-center border-b pb-4 bg-white shadow-sm">
-  <img src={logo} alt="Click Verse" className="h-30 w-auto mb-3" />
-  <h1 className="text-3xl font-bold text-[#008080]">Funil de Vendas</h1>
+  <img src={logo} alt="Click Verse" className="h-16 w-auto mb-3" />
+  <h1 className="text-3xl font-bold text-black">Funil de Vendas</h1>
   <p className="text-sm text-gray-600">Drag & Drop, filtros, CRUD, dashboard.</p>
 </header>
 
@@ -197,8 +197,8 @@ export default function App() {
         <div className="text-right">
   <button
     onClick={openCreate}
-    className="px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:opacity-90"
-  >
+   className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+  
     + Novo negócio
   </button>
 </div>
