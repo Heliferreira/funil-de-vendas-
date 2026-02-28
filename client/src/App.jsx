@@ -5,7 +5,7 @@ import Chart from 'chart.js/auto'
 import Papa from 'papaparse' // Importação necessária para o CSV
 import logo from './assets/LogoClickVerse.png';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+const API = 'https://funil-de-vendas-api.onrender.com'
 
 const STAGES = [
   { key: 'LEAD', label: 'Lead' },
