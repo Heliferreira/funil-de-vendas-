@@ -24,9 +24,11 @@ async function testConnection() {
 testConnection();
 
 // === AJUSTE NO CORS PARA LIBERAR O FRONT-END ===
+// Substitua o app.use(cors()) antigo por este:
 app.use(cors({
-  origin: '*', // Permite todas as origens ou coloque a URL do seu front 'https://funil-de-vendas-rva8.onrender.com'
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: true, // Permite qualquer origem que solicite
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
