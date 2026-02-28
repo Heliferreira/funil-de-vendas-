@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import Chart from 'chart.js/auto'
+import Papa from 'papaparse' // Importação necessária para o CSV
 import logo from './assets/LogoClickVerse.png';
-
 
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
 
@@ -56,19 +56,18 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
-  // === FETCH reforçado (cache-buster + try/catch) ===
   async function fetchDeals() {
     setLoading(true)
     try {
       const res = await axios.get(`${API}/deals`, {
-        params: { q: query || undefined, priority: priority || undefined, _ts: Date.now() }, // cache-buster
+        params: { q: query || undefined, priority: priority || undefined, _ts: Date.now() },
         headers: { 'Cache-Control': 'no-cache' }
       })
       const data = Array.isArray(res.data) ? res.data : []
       setDeals(data)
     } catch (e) {
       console.error('Falha ao carregar deals:', e)
-      setDeals([]) // evita crash/tela branca
+      setDeals([])
     } finally {
       setLoading(false)
     }
@@ -76,6 +75,38 @@ export default function App() {
 
   useEffect(() => { fetchDeals() }, [])
   useEffect(() => { fetchDeals() }, [query, priority])
+
+  // === FUNÇÃO DE IMPORTAÇÃO CSV ===
+  const handleImportCSV = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const importedDeals = results.data.map(row => ({
+          title: row.Nome || 'Sem Nome',
+          company: row.Empresa || 'N/A',
+          contact: `${row.Email || ''} ${row.Celular || ''}`.trim(),
+          value: 0,
+          stage: 'LEAD',
+          priority: 'MEDIUM',
+          notes: `Cargo: ${row.Cargo || 'N/A'} | Gênero: ${row.Gênero || 'N/A'}`,
+          dueDate: new Date().toISOString()
+        }));
+
+        try {
+          await axios.post(`${API}/deals/bulk`, { deals: importedDeals });
+          alert('Leads importados com sucesso!');
+          fetchDeals();
+        } catch (err) {
+          console.error(err);
+          alert('Erro ao importar leads. Verifique a rota /bulk no backend.');
+        }
+      }
+    });
+  };
 
   const columns = useMemo(() => {
     const map = {}
@@ -86,23 +117,15 @@ export default function App() {
 
   function openCreate() {
     setEditing({
-      title: '',
-      company: '',
-      contact: '',
-      value: 0,
+      title: '', company: '', contact: '', value: 0,
       dueDate: new Date().toISOString().slice(0, 10),
-      priority: 'MEDIUM',
-      notes: '',
-      stage: 'LEAD'
+      priority: 'MEDIUM', notes: '', stage: 'LEAD'
     })
     setModalOpen(true)
   }
 
   function openEdit(item) {
-    setEditing({
-      ...item,
-      dueDate: item.dueDate?.slice(0,10)
-    })
+    setEditing({ ...item, dueDate: item.dueDate?.slice(0, 10) })
     setModalOpen(true)
   }
 
@@ -113,10 +136,10 @@ export default function App() {
       dueDate: new Date(editing.dueDate)
     }
     if (editing.id) {
-  await axios.put(`${API}/deals/${editing.id}`, payload)
-} else {
-  await axios.post(`${API}/deals`, payload)
-}
+      await axios.put(`${API}/deals/${editing.id}`, payload)
+    } else {
+      await axios.post(`${API}/deals`, payload)
+    }
     setModalOpen(false)
     setEditing(null)
     fetchDeals()
@@ -135,9 +158,7 @@ export default function App() {
     const destStage = destination.droppableId
     if (sourceStage === destStage && destination.index === source.index) return
 
-    // Recalcula a ordem na coluna de destino
     const finalIds = Array.from(columns[destStage].map(d => d.id))
-    // Se o item veio de outra coluna, removemos ele da origem e inserimos no destino
     if (sourceStage !== destStage) {
       const idxInDest = finalIds.indexOf(draggableId)
       if (idxInDest !== -1) finalIds.splice(idxInDest, 1)
@@ -156,23 +177,17 @@ export default function App() {
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
-    <header className="mb-4 flex flex-col items-center text-center border-b pb-4 bg-white shadow-sm">
-  <img src={logo} alt="Click Verse" className="h-16 w-auto mb-3" />
-  <h1 className="text-3xl font-bold text-black">Funil de Vendas</h1>
-  <p className="text-sm text-gray-600">Drag & Drop, filtros, CRUD, dashboard.</p>
-</header>
+      <header className="mb-4 flex flex-col items-center text-center border-b pb-4 bg-white shadow-sm">
+        <img src={logo} alt="Click Verse" className="h-16 w-auto mb-3" />
+        <h1 className="text-3xl font-bold text-black">Funil de Vendas</h1>
+        <p className="text-sm text-gray-600">Drag & Drop, filtros, CRUD, dashboard.</p>
+      </header>
 
-
-    {/* avisos para evitar tela branca */}
       {loading && (
-        <div className="mb-4 p-3 rounded bg-yellow-50 border text-sm">
-          Carregando dados...
-        </div>
+        <div className="mb-4 p-3 rounded bg-yellow-50 border text-sm">Carregando dados...</div>
       )}
       {!loading && deals.length === 0 && (
-        <div className="mb-4 p-3 rounded bg-red-50 border text-sm">
-          Nenhum dado carregado. Verifique se o seed foi executado e recarregue a página.
-        </div>
+        <div className="mb-4 p-3 rounded bg-red-50 border text-sm">Nenhum dado carregado.</div>
       )}
 
       <div className="grid md:grid-cols-3 gap-4 items-center mb-6">
@@ -181,7 +196,7 @@ export default function App() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             className="w-full border rounded-lg px-3 py-2"
-            placeholder="Buscar por título, empresa, contato, observações..."
+            placeholder="Buscar..."
           />
           <select
             value={priority}
@@ -194,15 +209,17 @@ export default function App() {
             <option value="LOW">Baixa</option>
           </select>
         </div>
-        <div className="text-right">
-  <button
-    onClick={openCreate}
-   className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-  
-    + Novo negócio
-  </button>
-</div>
-
+        
+        {/* BOTÕES DE AÇÃO UNITÁRIA E EM MASSA */}
+        <div className="text-right flex justify-end gap-2">
+          <label className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded cursor-pointer transition-colors">
+            <span>📥 Importar Leads</span>
+            <input type="file" accept=".csv" className="hidden" onChange={handleImportCSV} />
+          </label>
+          <button onClick={openCreate} className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+            + Novo negócio
+          </button>
+        </div>
       </div>
 
       <section className="mb-8 rounded-xl bg-white p-4 shadow">
@@ -256,7 +273,7 @@ export default function App() {
                               <div className="text-sm text-gray-600">{item.company} • {item.contact}</div>
                               <div className="text-sm">{formatCurrency(item.value)}</div>
                               <div className="text-xs text-gray-500">Previsto: {new Date(item.dueDate).toLocaleDateString('pt-BR')}</div>
-                              {item.notes && <div className="text-xs text-gray-600 mt-1">{item.notes}</div>}
+                              {item.notes && <div className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{item.notes}</div>}
                               <div className="flex gap-2 mt-2">
                                 <button onClick={() => openEdit(item)} className="text-indigo-700 hover:underline text-sm">Editar</button>
                                 <button onClick={() => deleteItem(item.id)} className="text-red-600 hover:underline text-sm">Excluir</button>
@@ -276,7 +293,7 @@ export default function App() {
       </DragDropContext>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-4 w-full max-w-xl">
             <h3 className="font-semibold mb-3">{editing?.id ? 'Editar negócio' : 'Novo negócio'}</h3>
             <div className="grid md:grid-cols-2 gap-3">
@@ -286,15 +303,15 @@ export default function App() {
                      value={editing.company} onChange={e => setEditing({...editing, company: e.target.value})}/>
               <input className="border rounded px-3 py-2" placeholder="Contato"
                      value={editing.contact} onChange={e => setEditing({...editing, contact: e.target.value})}/>
-              <input className="border rounded px-3 py-2" type="number" placeholder="Valor (R$)"
+              <input className="border rounded px-3 py-2" type="number" placeholder="Valor"
                      value={editing.value} onChange={e => setEditing({...editing, value: e.target.value})}/>
               <input className="border rounded px-3 py-2" type="date"
                      value={editing.dueDate} onChange={e => setEditing({...editing, dueDate: e.target.value})}/>
               <select className="border rounded px-3 py-2"
                       value={editing.priority} onChange={e => setEditing({...editing, priority: e.target.value})}>
-                <option value="HIGH">Prioridade Alta</option>
-                <option value="MEDIUM">Prioridade Média</option>
-                <option value="LOW">Prioridade Baixa</option>
+                <option value="HIGH">Alta</option>
+                <option value="MEDIUM">Média</option>
+                <option value="LOW">Baixa</option>
               </select>
               <select className="border rounded px-3 py-2"
                       value={editing.stage} onChange={e => setEditing({...editing, stage: e.target.value})}>
