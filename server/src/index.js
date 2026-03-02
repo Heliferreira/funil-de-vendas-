@@ -71,3 +71,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`🚀 Servidor voando na porta ${PORT}`));
+
+// forçando deploy 2.0
