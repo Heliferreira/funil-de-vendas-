@@ -16,6 +16,7 @@ router.get('/', async (req, res) => {
         { title: { contains: q, mode: 'insensitive' } },
         { company: { contains: q, mode: 'insensitive' } },
         { contact: { contains: q, mode: 'insensitive' } },
+        { email: { contains: q, mode: 'insensitive' } }, // Busca também por e-mail
       ];
     }
     const deals = await prisma.deal.findMany({
@@ -33,22 +34,30 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const data = req.body;
+    
+    // Busca o último index da coluna para manter a ordem
     const maxIndex = await prisma.deal.aggregate({
       where: { stage: data.stage },
       _max: { orderIndex: true }
     });
     const orderIndex = (maxIndex._max.orderIndex ?? -1) + 1;
+
+    // Criando com conversão de valor para número
     const created = await prisma.deal.create({
-      data: { ...data, orderIndex }
+      data: { 
+        ...data, 
+        value: parseFloat(data.value) || 0, // Resolve o problema do R$ 0,00
+        orderIndex 
+      }
     });
     res.status(201).json(created);
   } catch (err) {
-    console.error("❌ ERRO AO CRIAR NEGÓCIO:", err.message);
+    console.error("❌ ERRO AO CRIAR NEGÓCIOS:", err.message);
     res.status(500).json({ error: "Erro ao salvar", details: err.message });
   }
 });
 
-// === NOVA ROTA: IMPORTAÇÃO EM MASSA (BULK) ===
+// 3. IMPORTAÇÃO EM MASSA (BULK)
 router.post('/bulk', async (req, res) => {
   try {
     const { deals } = req.body;
@@ -57,7 +66,6 @@ router.post('/bulk', async (req, res) => {
       return res.status(400).json({ error: "Dados inválidos para importação" });
     }
 
-    // Buscamos o último index da coluna LEAD para continuar a contagem
     const maxIndex = await prisma.deal.aggregate({
       where: { stage: 'LEAD' },
       _max: { orderIndex: true }
@@ -65,9 +73,10 @@ router.post('/bulk', async (req, res) => {
     
     let currentOrder = (maxIndex._max.orderIndex ?? -1) + 1;
 
-    // Adicionamos o orderIndex incremental para cada item importado
+    // Ajuste crucial: Converte valores de texto para número durante a importação
     const dealsWithOrder = deals.map((deal) => ({
       ...deal,
+      value: parseFloat(deal.value) || 0, // Garante que os leads importados apareçam no gráfico
       orderIndex: currentOrder++
     }));
 
@@ -84,16 +93,30 @@ router.post('/bulk', async (req, res) => {
   }
 });
 
-// 3. REORDENAR (DRAG & DROP)
+// 4. ATUALIZAR DADOS (EDITAR)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    
+    const updated = await prisma.deal.update({
+      where: { id: String(id) },
+      data: {
+        ...data,
+        value: data.value ? parseFloat(data.value) : 0 // Garante número na edição
+      }
+    });
+    res.json(updated);
+  } catch (err) {
+    console.error("❌ ERRO AO ATUALIZAR:", err.message);
+    res.status(500).json({ error: "Erro ao atualizar", details: err.message });
+  }
+});
+
+// 5. REORDENAR (DRAG & DROP)
 router.post('/reorder', async (req, res) => {
   try {
     const { destinationStage, orderedIds } = req.body;
-
-    console.log(`📦 Reordenando coluna: ${destinationStage}`);
-
-    if (!orderedIds || !Array.isArray(orderedIds)) {
-      return res.status(400).json({ error: "Lista de IDs inválida" });
-    }
 
     const updates = orderedIds.map((id, index) => {
       return prisma.deal.update({
@@ -106,33 +129,14 @@ router.post('/reorder', async (req, res) => {
     });
 
     await Promise.all(updates);
-
-    console.log("✅ Coluna reordenada com sucesso no banco!");
     res.json({ message: "Ordem atualizada" });
   } catch (err) {
-    console.error("❌ ERRO NO PRISMA AO REORDENAR:", err.message);
-    res.status(500).json({ error: "Falha no banco de dados", details: err.message });
+    console.error("❌ ERRO AO REORDENAR:", err.message);
+    res.status(500).json({ error: "Falha ao reordenar", details: err.message });
   }
 });
 
-// 4. ATUALIZAR DADOS DO CARD
-router.put('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const data = req.body;
-    
-    const updated = await prisma.deal.update({
-      where: { id: String(id) },
-      data
-    });
-    res.json(updated);
-  } catch (err) {
-    console.error("❌ ERRO AO ATUALIZAR:", err.message);
-    res.status(500).json({ error: "Erro ao atualizar", details: err.message });
-  }
-});
-
-// 5. EXCLUIR NEGÓCIO
+// 6. EXCLUIR NEGÓCIO
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
