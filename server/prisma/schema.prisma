@@ -12,12 +12,13 @@ model Deal {
   id          String   @id @default(cuid())
   title       String
   company     String
-  contact     String
-  value       Float
+  contact     String   // Mantemos este para compatibilidade com os dados antigos
+  email       String?  // Novo campo para o e-mail separado
+  phone       String?  // Novo campo para o telefone separado
+  value       Float    @default(0)
   dueDate     DateTime
   priority    Priority @default(MEDIUM)
   notes       String?
-
   stage       Stage    @default(LEAD)
   orderIndex  Int      @default(0) // para ordenar dentro da coluna
   createdAt   DateTime @default(now())
