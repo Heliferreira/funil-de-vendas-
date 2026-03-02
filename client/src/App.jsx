@@ -270,7 +270,9 @@ export default function App() {
                                   {item.priority === 'HIGH' ? 'Alta' : item.priority === 'LOW' ? 'Baixa' : 'Média'}
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-600">{item.company} • {item.contact}</div>
+                              <div className="text-sm text-gray-800 font-bold">{item.company}</div>
+                              <div className="text-xs text-blue-600">{item.email}</div>
+                              <div className="text-xs text-gray-500">{item.phone || item.contact}</div>
                               <div className="text-sm">{formatCurrency(item.value)}</div>
                               <div className="text-xs text-gray-500">Previsto: {new Date(item.dueDate).toLocaleDateString('pt-BR')}</div>
                               {item.notes && <div className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{item.notes}</div>}
@@ -301,8 +303,10 @@ export default function App() {
                      value={editing.title} onChange={e => setEditing({...editing, title: e.target.value})}/>
               <input className="border rounded px-3 py-2" placeholder="Empresa"
                      value={editing.company} onChange={e => setEditing({...editing, company: e.target.value})}/>
-              <input className="border rounded px-3 py-2" placeholder="Contato"
-                     value={editing.contact} onChange={e => setEditing({...editing, contact: e.target.value})}/>
+              <input className="border rounded px-3 py-2" placeholder="E-mail"
+                     value={editing.email || ''} onChange={e => setEditing({...editing, email: e.target.value})}/>
+              <input className="border rounded px-3 py-2" placeholder="Telefone"
+                     value={editing.phone || ''} onChange={e => setEditing({...editing, phone: e.target.value})}/>
               <input className="border rounded px-3 py-2" type="number" placeholder="Valor"
                      value={editing.value} onChange={e => setEditing({...editing, value: e.target.value})}/>
               <input className="border rounded px-3 py-2" type="date"
