@@ -25,7 +25,7 @@
   background-repeat: no-repeat;
   
   /* O ZOOM acontece apenas nesta camada interna */
-  transform: scale(1.1); 
+  transform: scale(1); 
   z-index: -1; /* Fica atrás do card de login */
 }
 
