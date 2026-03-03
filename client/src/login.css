@@ -6,11 +6,14 @@
   align-items: center;
   background-color: #000;
   background-image: url('./assets/fundoLogin.jpg'); 
-  /* ZOOM: Aumentado para 115% para remover as bordas brancas da imagem */
-  background-size: 115%; 
+  
+  /* SOLUÇÃO PARA O ZOOM SEM FAIXAS PRETAS */
+  background-size: cover;    /* Primeiro garante que cobre tudo */
+  transform: scale(1.1);     /* Dá o zoom de 10% no elemento inteiro */
   background-position: center;
   background-repeat: no-repeat;
-  overflow: hidden; /* Garante que o zoom não crie barras de rolagem */
+  
+  overflow: hidden;          /* Impede que o zoom crie barras de rolagem */
 }
 
 .login-card {
