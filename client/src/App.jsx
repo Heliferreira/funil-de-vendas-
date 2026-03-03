@@ -2,8 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import Chart from 'chart.js/auto'
-import Papa from 'papaparse' // Importação necessária para o CSV
-import logo from './assets/LogoClickVerse.png';
+import Papa from 'papaparse'
+import logo from './assets/LogoClickVerse.png'
+
+// Importações para Segurança e Login
+import { supabase } from './supabaseClient'
+import Login from './login'
 
 const API = 'https://funil-de-vendas-8cjn.onrender.com';
 
@@ -49,6 +53,10 @@ function DashboardPie({ data }) {
 }
 
 export default function App() {
+  // --- ESTADO DE AUTENTICAÇÃO ---
+  const [session, setSession] = useState(null)
+  
+  // --- ESTADOS DO FUNIL ---
   const [deals, setDeals] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -56,7 +64,21 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
+  // Monitorar Sessão do Usuário
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
   async function fetchDeals() {
+    if (!session) return;
     setLoading(true)
     try {
       const res = await axios.get(`${API}/deals`, {
@@ -73,8 +95,8 @@ export default function App() {
     }
   }
 
-  useEffect(() => { fetchDeals() }, [])
-  useEffect(() => { fetchDeals() }, [query, priority])
+  useEffect(() => { if(session) fetchDeals() }, [session])
+  useEffect(() => { if(session) fetchDeals() }, [query, priority])
 
   // === FUNÇÃO DE IMPORTAÇÃO CSV ===
   const handleImportCSV = (e) => {
@@ -86,19 +108,16 @@ export default function App() {
       skipEmptyLines: true,
       complete: async (results) => {
         const importedDeals = results.data.map(row => ({
-       
-  title: row.Nome || 'Sem Nome',
-  company: row.Empresa || 'N/A',
-  // Separando os campos para bater com o banco de dados
-  email: row.Email || '', 
-  phone: row.Celular || '',
-  // Tenta pegar o valor do CSV, se não existir coloca 0
-  value: parseFloat(row.Valor) || 0,
-  stage: 'LEAD',
-  priority: 'MEDIUM',
-  notes: `Cargo: ${row.Cargo || 'N/A'} | Gênero: ${row.Gênero || 'N/A'}`,
-  dueDate: new Date().toISOString()
-}));
+          title: row.Nome || 'Sem Nome',
+          company: row.Empresa || 'N/A',
+          email: row.Email || '', 
+          phone: row.Celular || '',
+          value: parseFloat(row.Valor) || 0,
+          stage: 'LEAD',
+          priority: 'MEDIUM',
+          notes: `Cargo: ${row.Cargo || 'N/A'} | Gênero: ${row.Gênero || 'N/A'}`,
+          dueDate: new Date().toISOString()
+        }));
 
         try {
           await axios.post(`${API}/deals/bulk`, { deals: importedDeals });
@@ -106,7 +125,7 @@ export default function App() {
           fetchDeals();
         } catch (err) {
           console.error(err);
-          alert('Erro ao importar leads. Verifique a rota /bulk no backend.');
+          alert('Erro ao importar leads.');
         }
       }
     });
@@ -119,9 +138,10 @@ export default function App() {
     return map
   }, [deals])
 
+  // Funções de CRUD e Drag&Drop (Mantidas do original)
   function openCreate() {
     setEditing({
-      title: '', company: '', contact: '', value: 0,
+      title: '', company: '', email: '', phone: '', value: 0,
       dueDate: new Date().toISOString().slice(0, 10),
       priority: 'MEDIUM', notes: '', stage: 'LEAD'
     })
@@ -179,21 +199,30 @@ export default function App() {
     fetchDeals()
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+  }
+
+  // --- LÓGICA DE PROTEÇÃO: SE NÃO HOUVER SESSÃO, MOSTRA LOGIN ---
+  if (!session) {
+    return <Login />
+  }
+
   return (
     <div className="p-4 max-w-7xl mx-auto">
-      <header className="mb-4 flex flex-col items-center text-center border-b pb-4 bg-white shadow-sm">
+      <header className="mb-4 flex flex-col items-center text-center border-b pb-4 bg-white shadow-sm relative">
+        <button 
+          onClick={handleLogout}
+          className="absolute right-4 top-4 text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+        >
+          Sair
+        </button>
         <img src={logo} alt="Click Verse" className="h-16 w-auto mb-3" />
         <h1 className="text-3xl font-bold text-black">Funil de Vendas</h1>
-        <p className="text-sm text-gray-600">Drag & Drop, filtros, CRUD, dashboard.</p>
+        <p className="text-sm text-gray-600">Control Metrics - Acesso Protegido</p>
       </header>
 
-      {loading && (
-        <div className="mb-4 p-3 rounded bg-yellow-50 border text-sm">Carregando dados...</div>
-      )}
-      {!loading && deals.length === 0 && (
-        <div className="mb-4 p-3 rounded bg-red-50 border text-sm">Nenhum dado carregado.</div>
-      )}
-
+      {/* FILTROS E IMPORTAÇÃO */}
       <div className="grid md:grid-cols-3 gap-4 items-center mb-6">
         <div className="col-span-2 flex gap-3">
           <input
@@ -214,7 +243,6 @@ export default function App() {
           </select>
         </div>
         
-        {/* BOTÕES DE AÇÃO UNITÁRIA E EM MASSA */}
         <div className="text-right flex justify-end gap-2">
           <label className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded cursor-pointer transition-colors">
             <span>📥 Importar Leads</span>
@@ -226,16 +254,17 @@ export default function App() {
         </div>
       </div>
 
+      {/* DASHBOARD */}
       <section className="mb-8 rounded-xl bg-white p-4 shadow">
-        <h2 className="font-semibold mb-2">Resumo</h2>
+        <h2 className="font-semibold mb-2">Resumo Geral</h2>
         <div className="grid md:grid-cols-3 gap-4">
           <div className="p-4 rounded-lg bg-gray-50 border">
-            <div className="text-sm text-gray-500">Total de negócios</div>
+            <div className="text-sm text-gray-500">Negócios</div>
             <div className="text-2xl font-bold">{deals.length}</div>
           </div>
           <div className="p-4 rounded-lg bg-gray-50 border">
             <div className="text-sm text-gray-500">Valor em aberto</div>
-            <div className="text-2xl font-bold">{formatCurrency(totalValue(deals.filter(d => d.stage !== 'WON' && d.stage !== 'LOST')))}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalValue(deals.filter(d => d.stage !== 'WON')))}</div>
           </div>
           <div className="p-4 rounded-lg bg-gray-50 border">
             <div className="text-sm text-gray-500">Valor fechado</div>
@@ -247,6 +276,7 @@ export default function App() {
         </div>
       </section>
 
+      {/* KANBAN BOARD */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid md:grid-cols-5 gap-4">
           {STAGES.map(stage => {
@@ -255,10 +285,10 @@ export default function App() {
               <Droppable droppableId={stage.key} key={stage.key}>
                 {(provided) => (
                   <div ref={provided.innerRef} {...provided.droppableProps}
-                       className="bg-white rounded-xl p-3 shadow min-h-[200px]">
+                       className="bg-white rounded-xl p-3 shadow min-h-[400px] border-t-4 border-indigo-500">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold">{stage.label}</h3>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs text-gray-500">
                         {list.length} • {formatCurrency(totalValue(list))}
                       </div>
                     </div>
@@ -267,22 +297,20 @@ export default function App() {
                         <Draggable draggableId={item.id} index={index} key={item.id}>
                           {(prov) => (
                             <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
-                                 className="rounded-lg border p-3 bg-gray-50">
+                                 className="rounded-lg border p-3 bg-gray-50 hover:shadow-md transition-shadow">
                               <div className="flex items-center justify-between">
-                                <div className="font-semibold">{item.title}</div>
-                                <span className={"text-xs px-2 py-0.5 rounded " + (PRIORITY_COLORS[item.priority] || '')}>
+                                <div className="font-semibold text-sm">{item.title}</div>
+                                <span className={"text-[10px] px-2 py-0.5 rounded " + (PRIORITY_COLORS[item.priority] || '')}>
                                   {item.priority === 'HIGH' ? 'Alta' : item.priority === 'LOW' ? 'Baixa' : 'Média'}
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-800 font-bold">{item.company}</div>
-                              <div className="text-xs text-blue-600">{item.email}</div>
-                              <div className="text-xs text-gray-500">{item.phone || item.contact}</div>
-                              <div className="text-sm">{formatCurrency(item.value)}</div>
-                              <div className="text-xs text-gray-500">Previsto: {new Date(item.dueDate).toLocaleDateString('pt-BR')}</div>
-                              {item.notes && <div className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{item.notes}</div>}
+                              <div className="text-xs text-gray-800 font-bold mt-1">{item.company}</div>
+                              <div className="text-[10px] text-blue-600 truncate">{item.email}</div>
+                              <div className="text-[10px] text-gray-500">{item.phone}</div>
+                              <div className="text-sm font-bold mt-1">{formatCurrency(item.value)}</div>
                               <div className="flex gap-2 mt-2">
-                                <button onClick={() => openEdit(item)} className="text-indigo-700 hover:underline text-sm">Editar</button>
-                                <button onClick={() => deleteItem(item.id)} className="text-red-600 hover:underline text-sm">Excluir</button>
+                                <button onClick={() => openEdit(item)} className="text-indigo-700 hover:underline text-[10px]">Editar</button>
+                                <button onClick={() => deleteItem(item.id)} className="text-red-600 hover:underline text-[10px]">Excluir</button>
                               </div>
                             </div>
                           )}
@@ -298,42 +326,40 @@ export default function App() {
         </div>
       </DragDropContext>
 
+      {/* MODAL DE EDIÇÃO/CRIAÇÃO */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-4 w-full max-w-xl">
-            <h3 className="font-semibold mb-3">{editing?.id ? 'Editar negócio' : 'Novo negócio'}</h3>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input className="border rounded px-3 py-2" placeholder="Título"
-                     value={editing.title} onChange={e => setEditing({...editing, title: e.target.value})}/>
-              <input className="border rounded px-3 py-2" placeholder="Empresa"
-                     value={editing.company} onChange={e => setEditing({...editing, company: e.target.value})}/>
-              <input className="border rounded px-3 py-2" placeholder="E-mail"
-                     value={editing.email || ''} onChange={e => setEditing({...editing, email: e.target.value})}/>
-              <input className="border rounded px-3 py-2" placeholder="Telefone"
-                     value={editing.phone || ''} onChange={e => setEditing({...editing, phone: e.target.value})}/>
-              <input className="border rounded px-3 py-2" type="number" placeholder="Valor"
-                     value={editing.value} onChange={e => setEditing({...editing, value: e.target.value})}/>
-              <input className="border rounded px-3 py-2" type="date"
-                     value={editing.dueDate} onChange={e => setEditing({...editing, dueDate: e.target.value})}/>
-              <select className="border rounded px-3 py-2"
-                      value={editing.priority} onChange={e => setEditing({...editing, priority: e.target.value})}>
-                <option value="HIGH">Alta</option>
-                <option value="MEDIUM">Média</option>
-                <option value="LOW">Baixa</option>
-              </select>
-              <select className="border rounded px-3 py-2"
-                      value={editing.stage} onChange={e => setEditing({...editing, stage: e.target.value})}>
-                {STAGES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-                <option value="LOST">Perdido</option>
-              </select>
-              <textarea className="border rounded px-3 py-2 md:col-span-2" rows="3" placeholder="Observações"
-                        value={editing.notes || ''} onChange={e => setEditing({...editing, notes: e.target.value})}/>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-xl shadow-2xl">
+            <h3 className="text-lg font-bold mb-4">{editing?.id ? 'Editar Negócio' : 'Novo Negócio'}</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Título</label>
+                <input className="border rounded px-3 py-2" value={editing.title} onChange={e => setEditing({...editing, title: e.target.value})}/>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Empresa</label>
+                <input className="border rounded px-3 py-2" value={editing.company} onChange={e => setEditing({...editing, company: e.target.value})}/>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">E-mail</label>
+                <input className="border rounded px-3 py-2" value={editing.email || ''} onChange={e => setEditing({...editing, email: e.target.value})}/>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Telefone</label>
+                <input className="border rounded px-3 py-2" value={editing.phone || ''} onChange={e => setEditing({...editing, phone: e.target.value})}/>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Valor</label>
+                <input className="border rounded px-3 py-2" type="number" value={editing.value} onChange={e => setEditing({...editing, value: e.target.value})}/>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Previsão</label>
+                <input className="border rounded px-3 py-2" type="date" value={editing.dueDate} onChange={e => setEditing({...editing, dueDate: e.target.value})}/>
+              </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => { setModalOpen(false); setEditing(null) }}
-                      className="px-4 py-2 rounded-lg border">Cancelar</button>
-              <button onClick={saveItem}
-                      className="px-4 py-2 rounded-lg bg-indigo-600 text-white">Salvar</button>
+            <div className="flex justify-end gap-2 mt-6">
+              <button onClick={() => { setModalOpen(false); setEditing(null) }} className="px-6 py-2 rounded-lg border hover:bg-gray-50">Cancelar</button>
+              <button onClick={saveItem} className="px-6 py-2 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700">Salvar</button>
             </div>
           </div>
         </div>
