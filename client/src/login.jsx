@@ -43,7 +43,7 @@ export default function Login() {
   };
 
   return (
-    <div className="login-bg">
+    <div className="login-bg" style={{ backgroundImage: `url(${fundoImg})` }}>
       <div className="login-card">
         <div className="login-header">
           <img src={logo} alt="Logo" className="logoControlmetrics.png" />
