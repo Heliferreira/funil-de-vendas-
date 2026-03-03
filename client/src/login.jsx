@@ -22,10 +22,11 @@ export default function Login() {
   return (
     <div className="login-bg">
       <div className="login-card">
-        <div className="login-header">
-          <span className="logo-icon">📊</span> 
-          <span className="brand-name">CONTROL METRICS</span>
-        </div>
+       <div className="login-header">
+       <img src={logo} alt="Logo" className="logoControlmetrics.png" />
+       <span className="brand-name">CONTROL METRICS</span>
+     </div>
+       
         
         <form onSubmit={handleLogin}>
           <div className="input-group">
@@ -50,7 +51,7 @@ export default function Login() {
 
           <div className="options">
             <label><input type="checkbox" /> Manter logado</label>
-            <a href="#">Esqueceu sua senha?</a>
+            
           </div>
 
           <button type="submit" className="btn-login" disabled={loading}>
@@ -58,7 +59,7 @@ export default function Login() {
           </button>
         </form>
         {error && <p className="error-msg">{error}</p>}
-        <p className="footer-text">Primeiro acesso? <a href="#">Crie uma conta</a></p>
+       
       </div>
     </div>
   );

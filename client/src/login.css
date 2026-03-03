@@ -5,10 +5,11 @@
   justify-content: center;
   align-items: center;
   background-color: #000;
-  /* Use o link da imagem de fundo do seu site original aqui */
-  background-image: url('URL_DA_SUA_IMAGEM_GEOMETRICA'); 
+  /* Atualizado com o nome exato do seu arquivo */
+  background-image: url('./assets/fundoLogin.jpg'); 
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
 }
 
 .login-card {
