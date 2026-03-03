@@ -86,15 +86,19 @@ export default function App() {
       skipEmptyLines: true,
       complete: async (results) => {
         const importedDeals = results.data.map(row => ({
-          title: row.Nome || 'Sem Nome',
-          company: row.Empresa || 'N/A',
-          contact: `${row.Email || ''} ${row.Celular || ''}`.trim(),
-          value: 0,
-          stage: 'LEAD',
-          priority: 'MEDIUM',
-          notes: `Cargo: ${row.Cargo || 'N/A'} | Gênero: ${row.Gênero || 'N/A'}`,
-          dueDate: new Date().toISOString()
-        }));
+       
+  title: row.Nome || 'Sem Nome',
+  company: row.Empresa || 'N/A',
+  // Separando os campos para bater com o banco de dados
+  email: row.Email || '', 
+  phone: row.Celular || '',
+  // Tenta pegar o valor do CSV, se não existir coloca 0
+  value: parseFloat(row.Valor) || 0,
+  stage: 'LEAD',
+  priority: 'MEDIUM',
+  notes: `Cargo: ${row.Cargo || 'N/A'} | Gênero: ${row.Gênero || 'N/A'}`,
+  dueDate: new Date().toISOString()
+}));
 
         try {
           await axios.post(`${API}/deals/bulk`, { deals: importedDeals });
