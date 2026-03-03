@@ -4,30 +4,18 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #000;
+  background-color: #000; /* Fundo preto caso a imagem não preencha tudo */
   
-  /* Garante que nada que cresça aqui dentro crie rolagem */
-  position: relative;
-  overflow: hidden; 
-}
-
-/* Criamos uma camada específica para o fundo para não afetar o card */
-.login-bg::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
- /* background-image: url('./assets/fundoLogin.jpg'); */
-  background-size: cover;
+  /* Ajustes para a foto original */
+  background-size: contain;    /* Mostra a foto INTEIRA sem cortes/zoom */
   background-position: center;
   background-repeat: no-repeat;
   
-  /* O ZOOM acontece apenas nesta camada interna */
-  transform: scale(1); 
-  z-index: -1; /* Fica atrás do card de login */
+  position: relative;
+  overflow: hidden;
 }
+
+/* REMOVA ou delete todo o bloco .login-bg::before que estava aqui */
 
 .login-card {
   background: #e9ecef;
@@ -37,6 +25,7 @@
   max-width: 400px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
   text-align: center;
+  z-index: 1; /* Garante que o card fique na frente */
 }
 
 .login-header {
