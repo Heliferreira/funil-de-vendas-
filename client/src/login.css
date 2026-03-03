@@ -5,11 +5,12 @@
   justify-content: center;
   align-items: center;
   background-color: #000;
-  /* Atualizado com o nome exato do seu arquivo */
   background-image: url('./assets/fundoLogin.jpg'); 
-  background-size: cover;
+  /* ZOOM: Aumentado para 115% para remover as bordas brancas da imagem */
+  background-size: 115%; 
   background-position: center;
   background-repeat: no-repeat;
+  overflow: hidden; /* Garante que o zoom não crie barras de rolagem */
 }
 
 .login-card {
@@ -23,20 +24,17 @@
 }
 
 .login-header {
-  font-weight: bold;
-  color: #333;
   margin-bottom: 30px;
   display: flex;
   justify-content: center;
-  gap: 10px;
 }
 
-/* Adicione abaixo do seu .login-header */
+/* Classe da Logo */
 .logoControlmetrics\.png { 
-  width: 200px;           /* Aumente ou diminua conforme necessário */
-  height: auto;           /* Importante para não amassar a imagem */
+  width: 200px;           
+  height: auto;           
   display: block;         
-  margin: 0 auto;         /* Garante a centralização */
+  margin: 0 auto;         
   object-fit: contain;
 }
 
@@ -57,8 +55,10 @@
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box; /* Garante que o padding não passe da largura */
 }
 
+/* BOTÃO ATUALIZADO (Responsivo e com estados) */
 .btn-login {
   width: 100%;
   padding: 12px;
@@ -68,6 +68,27 @@
   border-radius: 4px;
   cursor: pointer;
   margin-top: 10px;
+  font-weight: bold;
+  transition: all 0.2s ease; /* Suaviza a transição de cores */
+}
+
+/* Efeito ao passar o mouse */
+.btn-login:hover {
+  background: #2980b9;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Efeito ao clicar (Feedback visual) */
+.btn-login:active {
+  background: #1c5980;
+  transform: scale(0.98); /* Botão "afunda" levemente ao clicar */
+}
+
+/* Estado carregando (disabled) */
+.btn-login:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .error-msg { color: red; font-size: 12px; margin-top: 10px; }
