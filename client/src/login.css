@@ -1,16 +1,22 @@
 .login-bg {
+  /* Ocupa sempre 100% da área visível */
   width: 100vw;
   height: 100vh;
+  
+  
   display: flex;
   justify-content: center;
   align-items: center;
+
   
-  /* AJUSTE PARA PREENCHER TUDO SEM FAIXAS */
-  background-size: cover;    /* Estica a imagem para cobrir toda a tela */
-  background-position: center; /* Mantém o centro da foto focado */
+  background-size: 100% 100%; /* Força a imagem a esticar/encolher junto com a janela */
+  background-position: center;
   background-repeat: no-repeat;
+  background-attachment: fixed; /* Mantém a imagem presa no fundo */
+
   
-  position: relative;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
 }
 
