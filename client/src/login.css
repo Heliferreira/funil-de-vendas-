@@ -31,6 +31,15 @@
   gap: 10px;
 }
 
+/* Adicione abaixo do seu .login-header */
+.logoControlmetrics\.png { 
+  width: 200px;           /* Aumente ou diminua conforme necessário */
+  height: auto;           /* Importante para não amassar a imagem */
+  display: block;         
+  margin: 0 auto;         /* Garante a centralização */
+  object-fit: contain;
+}
+
 .input-group {
   text-align: left;
   margin-bottom: 15px;

@@ -25,7 +25,7 @@ export default function Login() {
       <div className="login-card">
        <div className="login-header">
        <img src={logo} alt="Logo" className="logoControlmetrics.png" />
-       <span className="brand-name">CONTROL METRICS</span>
+       
      </div>
        
         
