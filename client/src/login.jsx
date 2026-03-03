@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient'; 
 import './login.css';
 import logo from './assets/LogoClickVerse.png';
-
+import fundoImg from './assets/fundoLogin.jpg'; // Importação direta
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
