@@ -12,7 +12,7 @@ model Deal {
   id          String   @id @default(cuid())
   title       String
   company     String
-  contact     String   // Mantido para não quebrar leads antigos
+  contact     String?   // Mantido para não quebrar leads antigos
   email       String?  // Adicionado
   phone       String?  // Adicionado
   value       Float    @default(0)
