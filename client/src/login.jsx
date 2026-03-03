@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from './supabaseClient'; // Ajuste o caminho se necessário
-import './Login.css';
+import './login.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
