@@ -19,6 +19,7 @@ model Deal {
   dueDate     DateTime
   priority    Priority @default(MEDIUM)
   notes       String?
+  observations String?
   stage       Stage    @default(LEAD)
   orderIndex  Int      @default(0)
   createdAt   DateTime @default(now())
