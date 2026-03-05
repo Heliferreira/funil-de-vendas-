@@ -326,11 +326,12 @@ export default function App() {
         </div>
       </DragDropContext>
 
-      {/* MODAL DE EDIÇÃO/CRIAÇÃO */}
+   {/* MODAL DE EDIÇÃO/CRIAÇÃO */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-xl shadow-2xl">
             <h3 className="text-lg font-bold mb-4">{editing?.id ? 'Editar Negócio' : 'Novo Negócio'}</h3>
+            
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-gray-500">Título</label>
@@ -356,7 +357,18 @@ export default function App() {
                 <label className="text-xs text-gray-500">Previsão</label>
                 <input className="border rounded px-3 py-2" type="date" value={editing.dueDate} onChange={e => setEditing({...editing, dueDate: e.target.value})}/>
               </div>
+
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <label className="text-xs text-gray-500">Observações</label>
+                <textarea 
+                  className="border rounded px-3 py-2 w-full"
+                  rows="3"
+                  value={editing.notes || ''} 
+                  onChange={e => setEditing({...editing, notes: e.target.value})}
+                />
+              </div>
             </div>
+
             <div className="flex justify-end gap-2 mt-6">
               <button onClick={() => { setModalOpen(false); setEditing(null) }} className="px-6 py-2 rounded-lg border hover:bg-gray-50">Cancelar</button>
               <button onClick={saveItem} className="px-6 py-2 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700">Salvar</button>
