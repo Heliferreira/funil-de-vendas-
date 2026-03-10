@@ -13,8 +13,8 @@ const API = 'https://funil-de-vendas-8cjn.onrender.com';
 
 const STAGES = [
   { key: 'LEAD', label: 'Lead' },
-  { key: 'QUALIFIED', label: 'Qualificado' },
-  { key: 'PROPOSAL', label: 'Proposta' },
+  { key: 'QUALIFIED', label: 'Em contato' },
+  { key: 'PROPOSAL', label: 'interessado' },
   { key: 'NEGOTIATION', label: 'Negociação' },
   { key: 'WON', label: 'Fechado' },
 ]
